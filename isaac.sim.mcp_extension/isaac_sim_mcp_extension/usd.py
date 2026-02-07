@@ -458,8 +458,15 @@ class USDSearch3d:
             )
         )
         carb.log_info(f"usd_search_3d_from_text return code: {response.status_code}")
-        details = json.dumps(response.json(), indent=2)
-        details = json.loads(details)
+        response_json = response.json()
+        carb.log_info(f"Full API response: {json.dumps(response_json, indent=2)}")
+
+        details = response_json
+
+        # Check if we got any results
+        if not details or len(details) == 0:
+            raise Exception(f"No USD assets found for search query: '{text_prompt}'. The NVIDIA USD Search returned 0 results. Try different search terms or use primitive fallback.")
+
         url = details[0]['url']
 
         # Convert S3 URL to HTTPS URL if needed

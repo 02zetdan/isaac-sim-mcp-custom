@@ -1,0 +1,8 @@
+{
+  "claude.mcpServers": {
+    "isaac-sim": {
+      "command": "docker",
+      "args": ["compose", "run", "--rm", "isaac-mcp-server"]
+    }
+  }
+}

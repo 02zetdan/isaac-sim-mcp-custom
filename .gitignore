@@ -47,6 +47,9 @@ venv.bak/
 # IDE - Cursor
 .cursor/
 
+# Claude Code
+.claude/
+
 # Logs
 logs/
 *.log

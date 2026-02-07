@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  isaac-mcp-server:
+    build:
+      context: ./isaac_mcp
+      dockerfile: Dockerfile
+    image: isaac-mcp-server:latest
+    container_name: isaac-mcp-server
+
+    # Keep stdin open for MCP protocol communication
+    stdin_open: true
+    tty: false
+
+    # Environment variables for Isaac Sim connection
+    environment:
+      # On Windows, use host.docker.internal to access host's localhost
+      # On Linux, this can be overridden to 'localhost' if using host network
+      - ISAAC_SIM_HOST=${ISAAC_SIM_HOST:-host.docker.internal}
+      - ISAAC_SIM_PORT=${ISAAC_SIM_PORT:-8766}
+
+      # Optional: API Keys for 3D Generation and Asset Search
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
+      # - ARK_API_KEY=${ARK_API_KEY}
+      # - BEAVER3D_MODEL=${BEAVER3D_MODEL:-beaver-3d-v1}
+
+    # Note: --network=host doesn't work on Windows Docker Desktop
+    # Use extra_hosts instead for Windows compatibility
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Mount source code for development (optional, comment out for production)
+    volumes:
+      - ./isaac_mcp:/app:ro
+
+    # Auto-remove container after it stops
+    # This is important for MCP servers that are started/stopped frequently
+    # Comment out if you want to keep containers for debugging
+    # restart: unless-stopped
+
+# For Linux hosts, you can use this alternative configuration:
+# Uncomment the following and comment out the Windows-compatible version above
+#
+# services:
+#   isaac-mcp-server:
+#     build:
+#       context: ./isaac_mcp
+#       dockerfile: Dockerfile
+#     image: isaac-mcp-server:latest
+#     container_name: isaac-mcp-server
+#     network_mode: host
+#     stdin_open: true
+#     tty: false
+#     environment:
+#       - ISAAC_SIM_HOST=localhost
+#       - ISAAC_SIM_PORT=8766
+#     volumes:
+#       - ./isaac_mcp:/app:ro

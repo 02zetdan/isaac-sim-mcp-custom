@@ -33,14 +33,28 @@ from dataclasses import dataclass
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Dict, Any, List
 import os
+import sys
 from pathlib import Path
 import base64
 from urllib.parse import urlparse
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, 
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("IsaacMCPServer")
+
+# Configuration from environment variables
+ISAAC_SIM_HOST = os.getenv("ISAAC_SIM_HOST", "localhost")
+ISAAC_SIM_PORT = int(os.getenv("ISAAC_SIM_PORT", "8766"))
+
+# Startup diagnostics
+logger.info("=" * 60)
+logger.info("Isaac Sim MCP Server Starting")
+logger.info(f"Python version: {sys.version}")
+logger.info(f"Working directory: {os.getcwd()}")
+logger.info(f"Server file: {__file__}")
+logger.info(f"Isaac Sim target: {ISAAC_SIM_HOST}:{ISAAC_SIM_PORT}")
+logger.info("=" * 60)
 
 @dataclass
 class IsaacConnection:
@@ -219,7 +233,6 @@ async def server_lifespan(server: FastMCP) -> AsyncIterator[Dict[str, Any]]:
 # Create the MCP server with lifespan support
 mcp = FastMCP(
     "IsaacSimMCP",
-    description="Isaac Sim integration through the Model Context Protocol",
     lifespan=server_lifespan
 )
 
@@ -249,7 +262,7 @@ def get_isaac_connection():
     
     # Create a new connection if needed
     if _isaac_connection is None:
-        _isaac_connection = IsaacConnection(host="localhost", port=8766)
+        _isaac_connection = IsaacConnection(host=ISAAC_SIM_HOST, port=ISAAC_SIM_PORT)
         if not _isaac_connection.connect():
             logger.error("Failed to connect to Isaac")
             _isaac_connection = None
@@ -265,8 +278,8 @@ def get_scene_info(ctx: Context) -> str:
     try:
         isaac = get_isaac_connection()
         result = isaac.send_command("get_scene_info")
-        print("result: ", result)
-        
+        logger.debug(f"Scene info result: {result}")
+
         # Just return the JSON representation of what Isaac sent us
         return json.dumps(result, indent=2)
         # return json.dumps(result)
@@ -441,10 +454,10 @@ simulation_context.stop()
     try:
         # Get the global connection
         isaac = get_isaac_connection()
-        print("code: ", code)
-        
+        logger.debug(f"Executing code: {code[:100]}...")
+
         result = isaac.send_command("execute_script", {"code": code})
-        print("result: ", result)
+        logger.debug(f"Execution result: {result}")
         return result
         # return f"Code executed successfully: {result.get('result', '')}"
     except Exception as e:
